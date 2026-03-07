@@ -68,6 +68,7 @@ RUN --mount=type=cache,target=/tmp/.ccache,sharing=locked \
         USE_STATIC=yes     \
         CC="ccache gcc"    \
         CXX="ccache g++"  \
+        LDFLAGS="-L/usr/lib -static -static-libgcc -static-libstdc++" \
     && strip --strip-all i2pd
 
 # Гарантируем, что бинарник действительно статический

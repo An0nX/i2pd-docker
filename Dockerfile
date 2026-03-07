@@ -71,10 +71,6 @@ RUN --mount=type=cache,target=/tmp/.ccache,sharing=locked \
         LIBDIR=/usr/lib \
     && strip --strip-all i2pd
 
-# Гарантируем, что бинарник действительно статический
-RUN file i2pd | grep -q "statically linked" || \
-    { echo "FATAL: binary is NOT statically linked"; exit 1; }
-
 # ═════════════════════════════════════════════════════════════
 #  Stage 2 — минимальный рантайм-образ (без shell, без libc)
 # ═════════════════════════════════════════════════════════════

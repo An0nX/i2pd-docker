@@ -1,0 +1,233 @@
+name: i2pd-docker (build & push)
+
+on:
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Force build even if no new upstream commit"
+        type: boolean
+        default: false
+
+  schedule:
+    - cron: "0 */6 * * *"
+
+  push:
+    branches: ["master"]
+    paths:
+      - "Dockerfile"
+      - "i2pd-docker.conf"
+      - ".github/workflows/i2pd-docker-build.yml"
+
+concurrency:
+  group: i2pd-docker-build
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+env:
+  IMAGE_NAME: whn0thacked/i2pd-docker
+
+  UPSTREAM_OWNER: PurpleI2P
+  UPSTREAM_REPO: i2pd
+  UPSTREAM_REPO_URL: https://github.com/PurpleI2P/i2pd
+  UPSTREAM_CLONE_URL: https://github.com/PurpleI2P/i2pd.git
+  UPSTREAM_BRANCH: openssl
+
+  BUILD_IMAGE: dhi.io/alpine-base:3.23-dev
+  RUNTIME_IMAGE: gcr.io/distroless/static:nonroot
+
+  STATE_FILE: .github/i2pd-docker/state.json
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Fetch latest upstream commit and compare with state
+        id: check
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p "$(dirname "${STATE_FILE}")"
+
+          # ── read previous state ──
+          prev_commit_sha=""
+
+          if [ -f "${STATE_FILE}" ]; then
+            prev_commit_sha="$(jq -r '.commit_sha // ""' "${STATE_FILE}")"
+          fi
+
+          # ── GitHub API: fetch latest commit on branch ──
+          commit_json="$(
+            curl -fsSL \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${UPSTREAM_OWNER}/${UPSTREAM_REPO}/commits?sha=${UPSTREAM_BRANCH}&per_page=1"
+          )"
+
+          commit_sha="$(echo "${commit_json}" | jq -r '.[0].sha')"
+          commit_short="$(echo "${commit_sha}" | head -c 8)"
+          commit_title="$(echo "${commit_json}" | jq -r '.[0].commit.message' | head -n1)"
+          commit_author="$(echo "${commit_json}" | jq -r '.[0].commit.author.name')"
+          commit_email="$(echo "${commit_json}" | jq -r '.[0].commit.author.email')"
+          commit_date="$(echo "${commit_json}" | jq -r '.[0].commit.author.date')"
+          commit_url="$(echo "${commit_json}" | jq -r '.[0].html_url')"
+
+          if [ -z "${commit_sha}" ] || [ "${commit_sha}" = "null" ]; then
+            echo "::error::Cannot fetch latest commit from upstream"
+            exit 1
+          fi
+
+          # ── compare ──
+          changed=false
+          if [ -z "${prev_commit_sha}" ] || [ "${prev_commit_sha}" != "${commit_sha}" ]; then
+            changed=true
+          fi
+
+          # ── date-based tag: 20260228 ──
+          date_tag="$(echo "${commit_date}" | sed 's/T.*//' | tr -d '-')"
+
+          {
+            echo "changed=${changed}"
+            echo "commit_sha=${commit_sha}"
+            echo "commit_short=${commit_short}"
+            echo "commit_title=${commit_title}"
+            echo "commit_author=${commit_author}"
+            echo "commit_email=${commit_email}"
+            echo "commit_date=${commit_date}"
+            echo "commit_url=${commit_url}"
+            echo "date_tag=${date_tag}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Build decision (log)
+        shell: bash
+        run: |
+          echo "changed=${{ steps.check.outputs.changed }}"
+          echo "commit_sha=${{ steps.check.outputs.commit_sha }}"
+          echo "commit_short=${{ steps.check.outputs.commit_short }}"
+          echo "commit_title=${{ steps.check.outputs.commit_title }}"
+          echo "commit_author=${{ steps.check.outputs.commit_author }}"
+          echo "commit_date=${{ steps.check.outputs.commit_date }}"
+          echo "force=${{ github.event.inputs.force }}"
+          echo "event=${{ github.event_name }}"
+
+      - name: Build and push (multi-arch)
+        if: |
+          steps.check.outputs.changed == 'true' ||
+          github.event_name == 'push' ||
+          (github.event_name == 'workflow_dispatch' && inputs.force == true)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+
+          tags: |
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:${{ steps.check.outputs.date_tag }}
+            ${{ env.IMAGE_NAME }}:sha-${{ steps.check.outputs.commit_short }}
+
+          build-args: |
+            BUILD_IMAGE=${{ env.BUILD_IMAGE }}
+            RUNTIME_IMAGE=${{ env.RUNTIME_IMAGE }}
+            REPO_URL=${{ env.UPSTREAM_CLONE_URL }}
+            GIT_BRANCH=${{ env.UPSTREAM_BRANCH }}
+
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+          labels: |
+            org.opencontainers.image.title=i2pd
+            org.opencontainers.image.description=Purple I2P Daemon — full C++ I2P router, statically linked
+            org.opencontainers.image.source=${{ env.UPSTREAM_REPO_URL }}
+            org.opencontainers.image.url=https://i2pd.readthedocs.io/en/latest/
+            org.opencontainers.image.documentation=https://i2pd.readthedocs.io/en/latest/
+            org.opencontainers.image.licenses=BSD-3-Clause
+            org.opencontainers.image.revision=${{ steps.check.outputs.commit_sha }}
+            org.opencontainers.image.created=${{ steps.check.outputs.commit_date }}
+
+      - name: Update state file
+        if: steps.check.outputs.changed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          now="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+
+          jq -n \
+            --arg upstream_url "${UPSTREAM_REPO_URL}" \
+            --arg commit_sha "${{ steps.check.outputs.commit_sha }}" \
+            --arg commit_short "${{ steps.check.outputs.commit_short }}" \
+            --arg commit_title "${{ steps.check.outputs.commit_title }}" \
+            --arg commit_author "${{ steps.check.outputs.commit_author }}" \
+            --arg commit_date "${{ steps.check.outputs.commit_date }}" \
+            --arg commit_url "${{ steps.check.outputs.commit_url }}" \
+            --arg built_at_utc "${now}" \
+            '{
+              upstream: {
+                url: $upstream_url,
+                project: "PurpleI2P/i2pd"
+              },
+              commit_sha: $commit_sha,
+              commit_short: $commit_short,
+              commit_title: $commit_title,
+              commit_author: $commit_author,
+              commit_date: $commit_date,
+              commit_url: $commit_url,
+              built_at_utc: $built_at_utc
+            }' > "${STATE_FILE}"
+
+      - name: Commit & push updated state (mirror upstream commit)
+        if: steps.check.outputs.changed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Mirror upstream commit author
+          git config user.name "${{ steps.check.outputs.commit_author }}"
+          git config user.email "${{ steps.check.outputs.commit_email }}"
+
+          git add "${STATE_FILE}"
+
+          if git diff --cached --quiet; then
+            echo "No state changes to commit."
+            exit 0
+          fi
+
+          # Mirror upstream commit message with build metadata
+          COMMIT_MSG="$(cat <<'COMMIT_BODY'
+          ${{ steps.check.outputs.commit_title }}
+
+          Upstream-Commit: ${{ steps.check.outputs.commit_sha }}
+          Upstream-Author: ${{ steps.check.outputs.commit_author }} <${{ steps.check.outputs.commit_email }}>
+          Upstream-Date: ${{ steps.check.outputs.commit_date }}
+          Upstream-URL: ${{ steps.check.outputs.commit_url }}
+          Image-Tags: latest, ${{ steps.check.outputs.date_tag }}, sha-${{ steps.check.outputs.commit_short }}
+          COMMIT_BODY
+          )"
+
+          # Use upstream commit date
+          export GIT_AUTHOR_DATE="${{ steps.check.outputs.commit_date }}"
+          export GIT_COMMITTER_DATE="${{ steps.check.outputs.commit_date }}"
+
+          git commit -m "${COMMIT_MSG}"
+          git push

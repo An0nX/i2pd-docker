@@ -1,0 +1,13 @@
+{
+  "upstream": {
+    "url": "https://github.com/PurpleI2P/i2pd",
+    "project": "PurpleI2P/i2pd"
+  },
+  "commit_sha": "4604497127fe0384c0945e5ff63136e18240e6b2",
+  "commit_short": "46044971",
+  "commit_title": "don't set remote endpoint to client tunnel",
+  "commit_author": "orignal",
+  "commit_date": "2026-03-07T17:16:45Z",
+  "commit_url": "https://github.com/PurpleI2P/i2pd/commit/4604497127fe0384c0945e5ff63136e18240e6b2",
+  "built_at_utc": "2026-03-07T19:21:40Z"
+}

@@ -66,10 +66,13 @@ RUN --mount=type=cache,target=/tmp/.ccache,sharing=locked \
     make -j"$(nproc)" \
         USE_UPNP=yes \
         USE_STATIC=yes \
+        DEBUG=no \
+        LIBDIR=/usr/lib \
         CC="ccache gcc" \
         CXX="ccache g++" \
-        LIBDIR=/usr/lib \
-    && strip --strip-all i2pd
+        CXXFLAGS="-fstack-protector-strong -D_FORTIFY_SOURCE=2 -fPIE -fPIC" \
+        LDFLAGS="-Wl,-z,relro -Wl,-z,now -fstack-protector-strong -pie" \
+    && strip --strip-all --remove-section=.comment --remove-section=.note i2pd
 
 # ═════════════════════════════════════════════════════════════
 #  Stage 2 — минимальный рантайм-образ (без shell, без libc)

@@ -63,12 +63,12 @@ RUN if [ -n "${GIT_TAG}" ]; then \
 ENV CCACHE_DIR=/tmp/.ccache
 
 RUN --mount=type=cache,target=/tmp/.ccache,sharing=locked \
-    make -j"$(nproc)"      \
-        USE_UPNP=yes       \
-        USE_STATIC=yes     \
-        CC="ccache gcc"    \
-        CXX="ccache g++"  \
-        LDFLAGS="-L/usr/lib -static -static-libgcc -static-libstdc++" \
+    make -j"$(nproc)" \
+        USE_UPNP=yes \
+        USE_STATIC=yes \
+        CC="ccache gcc" \
+        CXX="ccache g++" \
+        LIBDIR=/usr/lib \
     && strip --strip-all i2pd
 
 # Гарантируем, что бинарник действительно статический

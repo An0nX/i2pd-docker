@@ -92,8 +92,8 @@ LABEL org.opencontainers.image.title="i2pd" \
 COPY --from=builder --chown=nonroot:nonroot \
      /src/i2pd/contrib/certificates /etc/i2pd/certificates
 
-COPY --chown=nonroot:nonroot \
-     i2pd-docker.conf /etc/i2pd/i2pd.conf
+COPY --from=builder --chown=nonroot:nonroot \
+     /src/i2pd/contrib/docker/i2pd-docker.conf /etc/i2pd/i2pd.conf
 
 # ── Статический бинарник ─────────────────────────────────────
 COPY --from=builder --chown=nonroot:nonroot \

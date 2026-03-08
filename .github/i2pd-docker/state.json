@@ -3,11 +3,11 @@
     "url": "https://github.com/PurpleI2P/i2pd",
     "project": "PurpleI2P/i2pd"
   },
-  "commit_sha": "9ecaffd447844f57dbc0b9bed0ce549508e9050c",
-  "commit_short": "9ecaffd4",
-  "commit_title": "made GetName const",
+  "commit_sha": "25cccb2679689ba7e610aea4ff49617e5c899532",
+  "commit_short": "25cccb26",
+  "commit_title": "fixed warnings",
   "commit_author": "orignal",
-  "commit_date": "2026-03-07T23:37:09Z",
-  "commit_url": "https://github.com/PurpleI2P/i2pd/commit/9ecaffd447844f57dbc0b9bed0ce549508e9050c",
-  "built_at_utc": "2026-03-08T01:51:19Z"
+  "commit_date": "2026-03-08T15:35:11Z",
+  "commit_url": "https://github.com/PurpleI2P/i2pd/commit/25cccb2679689ba7e610aea4ff49617e5c899532",
+  "built_at_utc": "2026-03-08T16:27:42Z"
 }

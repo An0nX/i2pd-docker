@@ -67,7 +67,8 @@ RUN --mount=type=cache,target=/tmp/.ccache,sharing=locked \
                   -fno-asynchronous-unwind-tables -fno-unwind-tables \
                   -fno-ident -fno-common \
                   -march=native -mtune=native" \
-        LDFLAGS="-flto=auto \
+        LDFLAGS="-static -static-libstdc++ -static-libgcc \
+                 -flto=auto \
                  -Wl,--gc-sections -Wl,-O2 -Wl,--sort-common \
                  -s"
 

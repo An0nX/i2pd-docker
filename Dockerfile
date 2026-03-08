@@ -55,9 +55,8 @@ RUN --mount=type=cache,target=/tmp/.ccache,sharing=locked \
         CXX="ccache g++" \
         CXXFLAGS="-fstack-protector-strong -D_FORTIFY_SOURCE=2 -fPIE -fPIC" \
         LDFLAGS="-Wl,-z,relro -Wl,-z,now -fstack-protector-strong -pie" \
-    && ls -la i2pd \
-    && file i2pd \
-    && strip --strip-all --remove-section=.comment --remove-section=.note i2pd
+    && make install PREFIX=/output \
+    && strip --strip-all /output/bin/i2pd
 
 # ═════════════════════════════════════════════════════════════
 #  Stage 2 — минимальный рантайм-образ
@@ -81,7 +80,7 @@ COPY --from=builder --chown=nonroot:nonroot \
 
 # ── Бинарник — копируем в корень для distroless ──────────────
 COPY --from=builder --chown=nonroot:nonroot \
-     /src/i2pd/i2pd /i2pd
+     /output/bin/i2pd /i2pd
 
 # ── Мутабельные данные ───────────────────────────────────────
 VOLUME /home/nonroot/data

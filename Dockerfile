@@ -43,7 +43,7 @@ RUN if [ -n "${GIT_TAG}" ]; then \
         git checkout "tags/${GIT_TAG}"; \
     fi
 
-# Сборка
+# Сборка (с максимальной совместимостью и полной статикой)
 ENV CCACHE_DIR=/tmp/.ccache
 
 RUN --mount=type=cache,target=/tmp/.ccache,sharing=locked \
@@ -74,8 +74,10 @@ RUN --mount=type=cache,target=/tmp/.ccache,sharing=locked \
 # ═════════════════════════════════════════════════════════════
 #  Автоматический поиск и подготовка файлов (Staging)
 # ═════════════════════════════════════════════════════════════
-# Создаем структуру папок, какой она должна быть в Distroless
-RUN mkdir -p /staging/etc/i2pd
+# Создаем структуру папок, включая те, что нужны для Volume!
+RUN mkdir -p /staging/etc/i2pd \
+             /staging/home/nonroot/data/destinations \
+             /staging/home/nonroot/data/tunnels.d
 
 RUN set -e; \
     # 1. Ищем исполняемый бинарник i2pd
@@ -86,7 +88,6 @@ RUN set -e; \
     strip --strip-all /staging/i2pd; \
     \
     # 2. Ищем папку certificates
-    # grep "contrib" гарантирует, что мы возьмем папку с исходными сертами, а не случайную
     CERTS_PATH=$(find /src -type d -name "certificates" | grep "contrib" | head -n 1); \
     if [ -z "$CERTS_PATH" ]; then echo "ERROR: Certificates dir not found!" && exit 1; fi; \
     echo "=> Found certificates at: $CERTS_PATH"; \
@@ -98,9 +99,8 @@ RUN set -e; \
     echo "=> Found config at: $CONF_PATH"; \
     cp "$CONF_PATH" /staging/etc/i2pd/i2pd.conf
 
-# Проверка, что всё на месте
+# Проверка, что бинарник на месте
 RUN ls -lah /staging/i2pd && file /staging/i2pd
-
 
 # ═════════════════════════════════════════════════════════════
 #  Stage 2 — Runtime образ
@@ -114,9 +114,8 @@ LABEL org.opencontainers.image.title="i2pd" \
       org.opencontainers.image.licenses="BSD-3-Clause" \
       org.opencontainers.image.authors="Mikal Villa <mikal@sigterm.no>"
 
-# Забираем всё собранное дерево файлов одной командой.
-# /staging/i2pd ляжет в /i2pd
-# /staging/etc/i2pd/* ляжет в /etc/i2pd/*
+# Забираем всё собранное дерево. 
+# Ключевой момент: флаг --chown сделает nonroot владельцем папок данных.
 COPY --from=builder --chown=nonroot:nonroot /staging /
 
 # Том для данных
@@ -124,7 +123,6 @@ VOLUME /home/nonroot/data
 
 EXPOSE 7070 4444 4447 7656 2827 7654 7650
 
-# ENTRYPOINT и CMD
 ENTRYPOINT ["/i2pd"]
 CMD [ \
     "--datadir=/home/nonroot/data", \

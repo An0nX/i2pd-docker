@@ -3,11 +3,11 @@
     "url": "https://github.com/PurpleI2P/i2pd",
     "project": "PurpleI2P/i2pd"
   },
-  "commit_sha": "25cccb2679689ba7e610aea4ff49617e5c899532",
-  "commit_short": "25cccb26",
-  "commit_title": "fixed warnings",
+  "commit_sha": "009a66fb7e354a689a0612f836489e794baddd7a",
+  "commit_short": "009a66fb",
+  "commit_title": "init XK state with ML-KEM for SSU2",
   "commit_author": "orignal",
-  "commit_date": "2026-03-08T15:35:11Z",
-  "commit_url": "https://github.com/PurpleI2P/i2pd/commit/25cccb2679689ba7e610aea4ff49617e5c899532",
-  "built_at_utc": "2026-03-08T16:27:42Z"
+  "commit_date": "2026-03-08T21:24:47Z",
+  "commit_url": "https://github.com/PurpleI2P/i2pd/commit/009a66fb7e354a689a0612f836489e794baddd7a",
+  "built_at_utc": "2026-03-08T22:22:30Z"
 }

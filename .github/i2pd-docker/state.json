@@ -3,11 +3,11 @@
     "url": "https://github.com/PurpleI2P/i2pd",
     "project": "PurpleI2P/i2pd"
   },
-  "commit_sha": "872fd312803c7bfad6e5c1165a819209f25f37b4",
-  "commit_short": "872fd312",
-  "commit_title": "fixed braces around scalar initializer clang warning",
+  "commit_sha": "3aa278eed155cd2de399ebc3ff398de3ebbed791",
+  "commit_short": "3aa278ee",
+  "commit_title": "fixed Debian 12 build",
   "commit_author": "orignal",
-  "commit_date": "2026-03-09T20:07:08Z",
-  "commit_url": "https://github.com/PurpleI2P/i2pd/commit/872fd312803c7bfad6e5c1165a819209f25f37b4",
-  "built_at_utc": "2026-03-09T20:33:40Z"
+  "commit_date": "2026-03-09T21:25:24Z",
+  "commit_url": "https://github.com/PurpleI2P/i2pd/commit/3aa278eed155cd2de399ebc3ff398de3ebbed791",
+  "built_at_utc": "2026-03-09T21:31:34Z"
 }

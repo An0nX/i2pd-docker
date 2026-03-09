@@ -3,11 +3,11 @@
     "url": "https://github.com/PurpleI2P/i2pd",
     "project": "PurpleI2P/i2pd"
   },
-  "commit_sha": "7fecfaad1c94e5870c44a65d39d7c9eaf193be9e",
-  "commit_short": "7fecfaad",
-  "commit_title": "DeepWiki Badge",
-  "commit_author": "Florian Tobias Ruppert",
-  "commit_date": "2026-03-09T18:36:45Z",
-  "commit_url": "https://github.com/PurpleI2P/i2pd/commit/7fecfaad1c94e5870c44a65d39d7c9eaf193be9e",
-  "built_at_utc": "2026-03-09T18:52:06Z"
+  "commit_sha": "872fd312803c7bfad6e5c1165a819209f25f37b4",
+  "commit_short": "872fd312",
+  "commit_title": "fixed braces around scalar initializer clang warning",
+  "commit_author": "orignal",
+  "commit_date": "2026-03-09T20:07:08Z",
+  "commit_url": "https://github.com/PurpleI2P/i2pd/commit/872fd312803c7bfad6e5c1165a819209f25f37b4",
+  "built_at_utc": "2026-03-09T20:33:40Z"
 }
